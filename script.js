@@ -1,12 +1,12 @@
-// Generate random room name if needed如果需要，生成随机房间名称
+// Generate random room name if needed
 if (!location.hash) {
   location.hash = Math.floor(Math.random() * 0xFFFFFF).toString(16);
 }
 const roomHash = location.hash.substring(1);
 
-// TODO: Replace with your own channel ID TODO:替换为您自己的频道ID
+// TODO: Replace with your own channel ID
 const drone = new ScaleDrone('yiS12Ts5RdNhebyM');
-// Room name needs to be prefixed with 'observable-' 房间名称需要加前缀“observable-”
+// Room name needs to be prefixed with 'observable-'
 const roomName = 'observable-' + roomHash;
 const configuration = {
   iceServers: [{
@@ -32,17 +32,17 @@ drone.on('open', error => {
       onError(error);
     }
   });
-  // We're connected to the room and received an array of 'members'我们连接到房间，收到一组“成员”
-  // connected to the room (including us). Signaling server is ready.连接到房间（包括我们）。信令服务器准备就绪。
+  // We're connected to the room and received an array of 'members'
+  // connected to the room (including us). Signaling server is ready.
   room.on('members', members => {
     console.log('MEMBERS', members);
-    // If we are the second user to connect to the room we will be creating the offer如果我们是第二个连接到房间的用户，我们将创建报价
+    // If we are the second user to connect to the room we will be creating the offer
     const isOfferer = members.length === 2;
     startWebRTC(isOfferer);
   });
 });
 
-// Send signaling data via Scaledrone通过Scaledrone发送信令数据
+// Send signaling data via Scaledrone
 function sendMessage(message) {
   drone.publish({
     room: roomName,
@@ -50,65 +50,99 @@ function sendMessage(message) {
   });
 }
 
+ // 鑺傜偣灞炴�у寲
+ const localVideo = document.getElementById("localVideo");
+
+ Promise.all ([
+  faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+   faceapi.nets.ssdMobilenetv1.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+   faceapi.nets.faceLandmark68TinyNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+   faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+   faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
+   faceapi.nets.faceExpressionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights')
+   
+
+ ]).then(startWebRTC)
+
+ 
+
 function startWebRTC(isOfferer) {
   pc = new RTCPeerConnection(configuration);
 
-  // 'onicecandidate' notifies us whenever an ICE agent needs to deliver a  
-  // message to the other peer through the signaling server  每当ICE代理需要通过信令服务器向另一个对等方传递消息时，“onicecandidate”就会通知我们
+  // 'onicecandidate' notifies us whenever an ICE agent needs to deliver a
+  // message to the other peer through the signaling server
   pc.onicecandidate = event => {
     if (event.candidate) {
       sendMessage({'candidate': event.candidate});
     }
   };
 
-  // If user is offerer let the 'negotiationneeded' event create the offer 如果用户是报价人，则让“negotiationneeded”事件创建报价
+  // If user is offerer let the 'negotiationneeded' event create the offer
   if (isOfferer) {
     pc.onnegotiationneeded = () => {
       pc.createOffer().then(localDescCreated).catch(onError);
     }
   }
 
-  // When a remote stream arrives display it in the #remoteVideo element  当远程流到达时，在#remoteVideo元素中显示它
+  // When a remote stream arrives display it in the #remoteVideo element
   pc.ontrack = event => {
     const stream = event.streams[0];
     if (!remoteVideo.srcObject || remoteVideo.srcObject.id !== stream.id) {
       remoteVideo.srcObject = stream;
     }
+   
   };
 
   navigator.mediaDevices.getUserMedia({
     audio: true,
     video: true,
   }).then(stream => {
-    // Display your local video in #localVideo element 在#localVideo元素中显示本地视频
+    // Display your local video in #localVideo element
     localVideo.srcObject = stream;
-    // Add your stream to be sent to the conneting peer 添加要发送到连接对等方的流
+    // Add your stream to be sent to the conneting peer
     stream.getTracks().forEach(track => pc.addTrack(track, stream));
   }, onError);
-
-  // Listen to signaling data from Scaledrone 收听Scaledrone的信令数据
+    
+  // Listen to signaling data from Scaledrone
   room.on('data', (message, client) => {
-    // Message was sent by us 消息是我们发的
+    // Message was sent by us
     if (client.id === drone.clientId) {
       return;
     }
 
     if (message.sdp) {
-      // This is called after receiving an offer or answer from another peer 这是在收到另一个同行的报价或答复后调用的
+      // This is called after receiving an offer or answer from another peer
       pc.setRemoteDescription(new RTCSessionDescription(message.sdp), () => {
-        // When receiving an offer lets answer it 当我们收到一个提议时，让我们回答它
+        // When receiving an offer lets answer it
         if (pc.remoteDescription.type === 'offer') {
           pc.createAnswer().then(localDescCreated).catch(onError);
         }
       }, onError);
     } else if (message.candidate) {
-      // Add the new ICE candidate to our connections remote description 将新的ICE候选对象添加到我们的远程描述中
+      // Add the new ICE candidate to our connections remote description
       pc.addIceCandidate(
         new RTCIceCandidate(message.candidate), onSuccess, onError
       );
     }
   });
 }
+localVideo.addEventListener('play',()=>{
+  const canvas = faceapi.createCanvasFromMedia(localVideo)
+  document.body.append (canvas)
+  const displaySize = {width:localVideo.width,height:localVideo.height}
+  faceapi.matchDimensions(canvas,displaySize)
+  setInterval( async()=>{
+      const detections = await faceapi.detectAllFaces(localVideo,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
+    .withFaceExpressions()
+      const resizedDetections = faceapi.resizeResults(detections,聽displaySize)
+      canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height)
+      faceapi.draw.drawDetections(canvas,resizedDetections)
+      faceapi.draw.drawFaceLandmarks(canvas,resizedDetections)  
+      faceapi.draw.drawFaceExpressions(canvas,resizedDetections)    
+  },100)
+})
+
+
 
 function localDescCreated(desc) {
   pc.setLocalDescription(
