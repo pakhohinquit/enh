@@ -16,6 +16,21 @@ const configuration = {
 let room;
 let pc;
 
+// 节点属性化
+const localVideo = document.getElementById("localVideo");
+const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'
+
+Promise.all ([
+ faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+  faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+  faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+  faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+  faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+  faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+  
+
+]).then(onSuccess)
+
 
 function onSuccess() {};
 function onError(error) {
@@ -50,20 +65,7 @@ function sendMessage(message) {
   });
 }
 
- // 节点属性化
- const localVideo = document.getElementById("localVideo");
-
- Promise.all ([
-  faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-   faceapi.nets.ssdMobilenetv1.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-   faceapi.nets.faceLandmark68TinyNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-   faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-   faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'),
-   faceapi.nets.faceExpressionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights')
-   
-
- ]).then(startWebRTC)
-
+ 
  
 
 function startWebRTC(isOfferer) {
@@ -131,9 +133,8 @@ localVideo.addEventListener('play',()=>{
   document.body.append (canvas)
   const displaySize = {width:localVideo.width,height:localVideo.height}
   faceapi.matchDimensions(canvas,displaySize)
-  setInterval( async()=>{
-      const detections = await faceapi.detectAllFaces(localVideo,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
-    .withFaceExpressions()
+  setInterval( async()=>{ 
+      const detections = await faceapi.detectAllFaces(localVideo,new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
       const resizedDetections = faceapi.resizeResults(detections, displaySize)
       canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height)
       faceapi.draw.drawDetections(canvas,resizedDetections)

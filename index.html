@@ -33,14 +33,15 @@
     }
 
     canvas{
-      position: absolute;
-    }
+    position: absolute;
+    right: 53%;
+  }
   </style>
 </head>
 <body>
   <div class="copy">Send your URL to a friend to start a video call</div>
-  <video id="localVideo" autoplay muted></video>
-  <video id="remoteVideo" autoplay></video>
+  <video id="localVideo"  width="720" height="560" autoplay muted></video>
+  <video id="remoteVideo" width="720" height="560" autoplay></video>
   <script defer src="face-api.min.js"></script>
   <script defer src="script.js"></script>
 </body>
