@@ -18,7 +18,7 @@ let pc;
 
 // 节点属性化
 const localVideo = document.getElementById("localVideo");
-const MODEL_URL = 'https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights'
+const MODEL_URL = 'https://raw.githubusercontent.com/pakhohinquit/enh/main/models'
 
 Promise.all ([
  faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
@@ -27,6 +27,7 @@ Promise.all ([
   faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
   faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
   faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+  
   
 
 ]).then(onSuccess)
