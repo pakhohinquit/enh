@@ -18,7 +18,7 @@ let pc;
 
 // 节点属性化
 const localVideo = document.getElementById("localVideo");
-const MODEL_URL = '/public/models'
+const MODEL_URL = '/models'
 
 Promise.all ([
  faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
