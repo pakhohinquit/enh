@@ -1,3 +1,19 @@
+// 节点属性化
+const localVideo = document.getElementById("localVideo");
+const MODEL_URL = 'https://raw.githubusercontent.com/pakhohinquit/enh/main/models'
+
+Promise.all ([
+ faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+  faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+  faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
+  faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+  faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+  faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+  
+  
+
+]).then(location.hash)
+
 // Generate random room name if needed
 if (!location.hash) {
   location.hash = Math.floor(Math.random() * 0xFFFFFF).toString(16);
@@ -15,22 +31,6 @@ const configuration = {
 };
 let room;
 let pc;
-
-// 节点属性化
-const localVideo = document.getElementById("localVideo");
-const MODEL_URL = 'https://raw.githubusercontent.com/pakhohinquit/enh/main/models'
-
-Promise.all ([
- faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-  faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-  faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
-  faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-  faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-  faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-  
-  
-
-]).then(onSuccess)
 
 
 function onSuccess() {};
@@ -129,6 +129,17 @@ function startWebRTC(isOfferer) {
     }
   });
 }
+
+
+
+function localDescCreated(desc) {
+  pc.setLocalDescription(
+    desc,
+    () => sendMessage({'sdp': pc.localDescription}),
+    onError
+  );
+}
+
 localVideo.addEventListener('play',()=>{
   const canvas = faceapi.createCanvasFromMedia(localVideo)
   document.body.append (canvas)
@@ -143,13 +154,3 @@ localVideo.addEventListener('play',()=>{
       faceapi.draw.drawFaceExpressions(canvas,resizedDetections)    
   },100)
 })
-
-
-
-function localDescCreated(desc) {
-  pc.setLocalDescription(
-    desc,
-    () => sendMessage({'sdp': pc.localDescription}),
-    onError
-  );
-}
